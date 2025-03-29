@@ -1,0 +1,37 @@
+<html>
+
+<head>
+    <title>Manage FAA Tests</title>
+</head>
+
+<body>
+    <h2>FAA Test List</h2>
+    <table border="1">
+        <tr>
+            <th>Test Number</th>
+            <th>Name</th>
+            <th>Max Score</th>
+        </tr>
+        {% for test in faa_tests %}
+        <tr>
+            <td>{{ test[0] }}</td>
+            <td>{{ test[1] }}</td>
+            <td>{{ test[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table><br>
+
+    <form method="POST">
+        <input type="text" name="test_number" placeholder="Test Number" required><br>
+        {% if action != 'Delete' %}
+        <input type="text" name="name" placeholder="Name (Optional)"><br>
+        <input type="text" name="max_score" placeholder="Max Score (Optional)"><br>
+        {% endif %}
+
+        <br><input type="submit" value="{{ action }}">
+    </form>
+
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+
+</html>

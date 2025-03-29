@@ -1,0 +1,48 @@
+<html>
+
+<head>
+    <title>Airport Management Dashboard</title>
+</head>
+
+<body>
+    <h3>Airport Management Dashboard</h3>
+
+    <h4>Employees</h4>
+    <ul>
+        <li><a href="{{ url_for('employee_add') }}">Add Employee</a></li>
+        <li><a href="{{ url_for('employee_update') }}">Update Employee</a></li>
+        <li><a href="{{ url_for('employee_delete') }}">Delete Employee</a></li>
+        <li><a href="{{ url_for('expertise') }}">Manage Expertise</a></li>
+        <li><a href="{{ url_for('update_salaries') }}">Update Salaries</a></li>
+    </ul>
+
+    <h4>Airplane Models</h4>
+    <ul>
+        <li><a href="{{ url_for('model_add') }}">Add Model</a></li>
+        <li><a href="{{ url_for('model_update') }}">Update Model</a></li>
+        <li><a href="{{ url_for('model_delete') }}">Delete Model</a></li>
+    </ul>
+
+    <h4>Airplanes</h4>
+    <ul>
+        <li><a href="{{ url_for('airplane_add') }}">Add Airplane</a></li>
+        <li><a href="{{ url_for('airplane_update') }}">Update Airplane</a></li>
+        <li><a href="{{ url_for('airplane_delete') }}">Delete Airplane</a></li>
+    </ul>
+
+    <h4>FAA Tests</h4>
+    <ul>
+        <li><a href="{{ url_for('faa_test_add') }}">Add FAA Test</a></li>
+        <li><a href="{{ url_for('faa_test_update') }}">Update FAA Test</a></li>
+        <li><a href="{{ url_for('faa_test_delete') }}">Delete FAA Test</a></li>
+    </ul>
+
+    <h4>Airworthiness Tests</h4>
+    <ul>
+        <li><a href="{{ url_for('tests') }}">View Airworthiness Tests</a></li>
+    </ul>
+
+    <h4><a href="{{ url_for('logout') }}">Logout</a></h4>
+</body>
+
+</html>

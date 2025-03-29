@@ -1,0 +1,36 @@
+<html>
+
+<head>
+    <title>Manage Airplanes</title>
+</head>
+
+<body>
+    <h2>Airplanes</h2>
+    <table border="1">
+        <tr>
+            <th>Registration Number</th>
+            <th>Model Number</th>
+        </tr>
+        {% for airplane in airplanes %}
+        <tr>
+            <td>{{ airplane[0] }}</td>
+            <td>{{ airplane[1] }}</td>
+        </tr>
+        {% endfor %}
+    </table><br>
+
+    <form method="POST">
+        <input type="text" name="reg_number" placeholder="Registration Number" required><br>
+        <select name="model_number" required>
+            <option value="">Select Model</option>
+            {% for model in models %}
+            <option value="{{ model[0] }}">{{ model[0] }}</option>
+            {% endfor %}
+        </select><br>
+        <button type="submit">Save Airplane</button>
+    </form>
+
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+
+</html>

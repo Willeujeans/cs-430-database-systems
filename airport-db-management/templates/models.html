@@ -1,0 +1,34 @@
+<html>
+<head>
+    <title>Manage Airplane Models</title>
+</head>
+<body>
+    <h2>Current Airplane Models</h2>
+    <table border="1">
+        <tr>
+            <th>Model Number</th>
+            <th>Capacity</th>
+            <th>Weight</th>
+        </tr>
+        {% for model in models %}
+        <tr>
+            <td>{{ model[0] }}</td>
+            <td>{{ model[1] }}</td>
+            <td>{{ model[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>{{ action }} Airplane Model</h2>
+    <form method="POST">
+        <input type="text" name="model_number" placeholder="Model Number" required><br>
+        {% if action != "Delete" %}
+            <input type="number" name="capacity" placeholder="Capacity (Optional)"><br>
+            <input type="number" name="weight" placeholder="Weight (Optional)"><br>
+        {% endif %}
+        <br><button type="submit">{{ action }}</button>
+    </form>
+
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>

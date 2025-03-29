@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <title>Manage Employees</title>
+</head>
+
+<body>
+    <h2>Employee List</h2>
+    <table border="1">
+        <tr>
+            <th>SSN</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Salary</th>
+            <th>Role</th>
+        </tr>
+        {% for emp in employees %}
+        <tr>
+            <td>{{ emp[0] }}</td>
+            <td>{{ emp[1] }}</td>
+            <td>{{ emp[2] }}</td>
+            <td>{{ emp[3] }}</td>
+            <td>{{ emp[4] }}</td>
+            <td>{{ emp[5] }}</td>
+        </tr>
+        {% endfor %}
+    </table><br>
+
+    <form method="POST">
+        <input type="text" name="ssn" placeholder="SSN" required><br>
+
+        {% if action != 'Delete' %}
+        <input type="text" name="name" placeholder="Name (Optional)"><br>
+        <input type="password" name="password" placeholder="Password (Optional)"><br>
+        <input type="text" name="address" placeholder="Address (Optional)"><br>
+        <input type="text" name="phone" placeholder="Phone (Optional)"><br>
+        <input type="text" name="salary" placeholder="Salary (Optional)"><br>
+        <select name="specialization">
+            <option value="">Role (Optional)</option>
+            <option value="manager">Manager</option>
+            <option value="technician">Technician</option>
+            <option value="atc">ATC</option>
+        </select><br>
+        {% endif %}
+
+        <br><input type="submit" value="{{ action }}">
+    </form>
+
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+
+</html>

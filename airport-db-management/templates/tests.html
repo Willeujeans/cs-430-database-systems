@@ -1,0 +1,33 @@
+<html>
+
+<head>
+    <title>Airworthiness Tests</title>
+</head>
+
+<body>
+    <h2>Airworthiness Tests</h2>
+    <table border="1">
+        <tr>
+            <th>Test Number</th>
+            <th>Technician (SSN)</th>
+            <th>Airplane (Reg Number)</th>
+            <th>Date</th>
+            <th>Duration (HH:MM:SS)</th>
+            <th>Score</th>
+        </tr>
+        {% for test in tests %}
+        <tr>
+            <td>{{ test[0] }}</td>
+            <td>{{ test[1] }}</td>
+            <td>{{ test[2] }}</td>
+            <td>{{ test[3] }}</td>
+            <td>{{ test[4] }}</td>
+            <td>{{ test[5] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+
+</html>

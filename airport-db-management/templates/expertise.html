@@ -1,0 +1,44 @@
+<html>
+
+<head>
+    <title>Manage Expertise</title>
+</head>
+
+<body>
+    <h2>Technician Expertise</h2>
+    <table border="1">
+        <tr>
+            <th>Technician SSN</th>
+            <th>Name</th>
+            <th>Expertise (Models)</th>
+        </tr>
+        {% for tech in technicians %}
+        <tr>
+            <td>{{ tech[0] }}</td>
+            <td>{{ tech[1] }}</td>
+            <td>{{ tech[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table><br>
+
+    <form method="POST">
+        <input type="text" name="ssn" placeholder="Technician SSN" required><br>
+        <select name="model_number" required>
+            <option value="">Select Model</option>
+            {% for model in models %}
+            <option value="{{ model[0] }}">{{ model[0] }}</option>
+            {% endfor %}
+        </select><br>
+        <select name="action">
+            <option value="add">Add Expertise</option>
+            <option value="remove">Remove Expertise</option>
+        </select><br>
+        <br>
+        <button type="submit">Apply</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+
+</html>
