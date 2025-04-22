@@ -73,23 +73,40 @@ CREATE TABLE atc (
 
 
 -- Procedures --
-CREATE PROCEDURE InsertTestEvent(
-    IN p_test_number INT NOT NULL,
-    IN p_ssn VARCHAR(9) NOT NULL,
-    IN p_reg_number TEXT NOT NULL,
-    IN p_date DATE NOT NULL,
-    IN p_duration INT CHECK (duration > 0),
-    IN p_score INT,
-)
-AS
-BEGIN
-    IF p_date > CURDATE() THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'date cannot be in the future';
-    ELSE
-        INSERT INTO test_event (test_number, ssn, reg_number, date, duration, score)
-        VALUES (p_test_number, p_ssn, p_reg_number, p_date, p_duration, p_score);
-    END IF;
-END;
 
--- Add Procedure to ensure that the technician conducting the test is an expert on the plane model
+CREATE OR REPLACE PROCEDURE InsertTestEvent(
+    IN p_test_number INT,
+    IN p_ssn VARCHAR(9),
+    IN p_reg_number TEXT,
+    IN p_date DATE,
+    IN p_duration INT,
+    IN p_score INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_max_score INT;  -- Variable to store max_score from faa_test
+BEGIN
+    -- Check if the date is valid
+    IF p_date > CURRENT_DATE THEN
+        RAISE EXCEPTION 'Date cannot be in the future';
+    END IF;
+
+    -- Compare faa_test max_score with inputed score
+    SELECT max_score INTO v_max_score
+    FROM faa_test
+    WHERE test_number = p_test_number;
+    IF p_score > v_max_score THEN
+        RAISE EXCEPTION 'Score % exceeds max allowed score % for test %';
+    END IF;
+
+    -- use reg_number to get model_number from plane_model
+    -- use ssn to get plane_models from expert that is matching the ssn
+    -- if the plane_model that is getting tested is the same as the experts plane_model we get with the ssn
+    -- if not we cannot accept the test
+
+    INSERT INTO test_event (test_number, ssn, reg_number, date, duration, score)
+    VALUES(p_test_number, p_ssn, p_reg_number, p_date, p_duration, p_score);
+END;
+$$;
+
