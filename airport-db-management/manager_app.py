@@ -6,7 +6,14 @@ from flask import Flask, session, request, render_template, redirect, url_for
 
 # START-STUDENT-CODE
 # Define the DSN for the ODBC connection to your PostgreSQL database.
-DSN = ""
+DSN = (
+    "Driver={PostgreSQL};"
+    "Server=localhost;"
+    "Port=5432;"
+    "Database=airport;"
+    "UID=postgres;"
+    "PWD=secret123;"
+)
 # END-STUDENT-CODE
 
 app = Flask(__name__)
