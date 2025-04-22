@@ -24,3 +24,21 @@ CREATE TABLE OrderItems (
 - test_event
 - faa_test
 - manager
+
+To log into the postgresql server
+``` BASH
+module load courses/cs430
+cspsql
+<enter password>
+```
+
+Inside of the SQL shell
+``` BASH
+\c willschm
+\i /s/chopin/n/under/willschm/2025Classes/cs-430-database-systems/airport-db-management/create_database.sql
+```
+
+To leave the shell
+``` BASH
+exit
+```
