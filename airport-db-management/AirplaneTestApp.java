@@ -7,9 +7,9 @@ import java.security.MessageDigest;
 public class AirplaneTestApp {
     // START-STUDENT-CODE
     // Set the database connection URL and credentials
-    private static final String DB_URL = "";
-    private static final String DB_USER = "";
-    private static final String DB_PASSWORD = "";
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/willschm?currentSchema=airport";
+    private static final String DB_USER = "willschm";
+    private static final String DB_PASSWORD = "831553213";
     // END-STUDENT-CODE
 
     private JFrame loginFrame, testEventFrame;
