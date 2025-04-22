@@ -16,3 +16,9 @@ Write SQL queries for:
  - Ensure deletions check for foreign key dependencies before removal.
 
 Deliverable: Submit a Python script (manager_app.py) with complete database integration.
+
+
+To Run this application
+``` BASH
+module purge && module load python/bundle-3.10 && python3 -m venv venv && source venv/bin/activate && pip install flask pyodbc && python3 manager_app.py
+```
