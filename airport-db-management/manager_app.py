@@ -41,10 +41,32 @@ def parse_int(value):
 def get_employees():
     # START-STUDENT-CODE
     # 1. Connect to the database using pyodbc and DSN.
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. Retrieve employees with their roles (Manager, Technician, ATC) or blank.
+    cursor.execute('''
+        SELECT 
+            e.ssn, 
+            e.name, 
+            e.address,
+            e.phone,
+            e.salary,
+            CASE 
+                WHEN m.ssn IS NOT NULL THEN 'Manager'
+                WHEN t.ssn IS NOT NULL THEN 'Technician'
+                WHEN a.ssn IS NOT NULL THEN 'ATC'
+                ELSE ''
+            END AS role
+        FROM employee e
+        LEFT JOIN manager m ON e.ssn = m.ssn
+        LEFT JOIN technician t ON e.ssn = t.ssn
+        LEFT JOIN atc a ON e.ssn = a.ssn
+    ''')
+    employees = cursor.fetchall()
+    
     # 3. Close the connection and return the result.
-
-    employees = []
+    cnxn.close()
 
     # END-STUDENT-CODE
     return employees
@@ -118,8 +140,8 @@ def login():
         cursor = cnxn.cursor()
         cursor.execute('''
             SELECT e.password
-            FROM airport.employee e
-            JOIN airport.manager m ON e.ssn = m.ssn
+            FROM employee e
+            JOIN manager m ON e.ssn = m.ssn
             WHERE e.ssn = ?
         ''', (username,))
         user = cursor.fetchone()
