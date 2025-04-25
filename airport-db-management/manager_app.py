@@ -136,11 +136,19 @@ def get_faa_tests():
 def get_airworthiness_tests():
     # START-STUDENT-CODE
     # 1. Connect to the database
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. Retrieve all airworthiness test events (test_number, ssn, reg_number, date, duration, score)
+    cursor.execute('''
+        SELECT test_number, ssn, reg_number, date, duration, score
+        FROM airworthiness_test
+    ''')
+    
+    tests = cursor.fetchall()
+    
     # 3. Close the connection
-
-    tests = []
-
+    cnxn.close()
     # END-STUDENT-CODE
     return tests
 
