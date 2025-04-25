@@ -116,12 +116,20 @@ def get_airplanes():
 def get_faa_tests():
     # START-STUDENT-CODE
     # 1. Connect to the database
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. Retrieve all FAA tests (test_number, name, max_score)
+    cursor.execute('''
+        SELECT test_number, name, max_score
+        FROM faa_test
+    ''')
+    
+    faa_tests = cursor.fetchall()
+    
     # 3. Close the connection
+    cnxn.close()
 
-    faa_tests = []
-
-    # END-STUDENT-CODE
     return faa_tests
 
 
