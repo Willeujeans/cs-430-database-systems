@@ -283,11 +283,66 @@ def employee_update():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
         # 2. Check if employee with SSN exists
+        cursor.execute('''
+            SELECT ssn FROM employee WHERE ssn = ?
+        ''', (ssn,))
+        
+        existing_employee = cursor.fetchone()
+        
         # 3. If exists, update non-empty fields
-        # 4. Handle specialization
+        if existing_employee:
+            # Build update parts for non-empty fields
+            update_parts = []
+            params = []
+            
+            if name:
+                update_parts.append("name = ?")
+                params.append(name)
+            
+            if password_hashed:
+                update_parts.append("password = ?")
+                params.append(password_hashed)
+            
+            if address:
+                update_parts.append("address = ?")
+                params.append(address)
+            
+            if phone:
+                update_parts.append("phone = ?")
+                params.append(phone)
+            
+            if salary:
+                update_parts.append("salary = ?")
+                params.append(salary)
+            
+            # If we have fields to update
+            if update_parts:
+                query = "UPDATE employee SET " + ", ".join(update_parts) + " WHERE ssn = ?"
+                params.append(ssn)
+                cursor.execute(query, params)
+            
+            # 4. Handle specialization
+            if specialization:
+                # Change specialization
+                # (I am assuming employees can only be: manager, technician, or atc)
+                cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+                
+                if specialization == 'Manager':
+                    cursor.execute("INSERT INTO manager (ssn) VALUES (?)", (ssn,))
+                elif specialization == 'Technician':
+                    cursor.execute("INSERT INTO technician (ssn) VALUES (?)", (ssn,))
+                elif specialization == 'ATC':
+                    cursor.execute("INSERT INTO atc (ssn) VALUES (?)", (ssn,))
+            
+            cnxn.commit()
         # 5. Close connection
-
+        cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_update'))
