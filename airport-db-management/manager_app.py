@@ -87,10 +87,18 @@ def get_airplane_models():
 def get_airplanes():
     # START-STUDENT-CODE
     # 1. Connect to the database
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. Retrieve all airplanes (reg_number, model_number)
+    cursor.execute('''
+        SELECT reg_number, model_number
+        FROM airplane
+    ''')
+    
     # 3. Close the connection
-
-    airplanes = []
+    cnxn.close()
+    airplanes = cursor.fetchall()
 
     # END-STUDENT-CODE
     return airplanes
