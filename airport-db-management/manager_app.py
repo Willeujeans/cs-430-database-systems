@@ -75,10 +75,19 @@ def get_employees():
 def get_airplane_models():
     # START-STUDENT-CODE
     # 1. Connect to the database
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. Retrieve all airplane models (model_number, capacity, weight)
+    cursor.execute('''
+        SELECT model_number, capacity, weight
+        FROM airplane_model
+    ''')
+    
+    models = cursor.fetchall()
+    
     # 3. Close the connection
-
-    models = []
+    cnxn.close()
 
     # END-STUDENT-CODE
     return models
