@@ -1,2 +1,7 @@
-#!/bin/bash
-module purge && module load python/bundle-3.10 && python3 -m venv venv && source venv/bin/activate && pip install flask pyodbc && python3 manager_app.py
+module purge &&
+module load python/bundle-3.8 &&
+module load java/20 &&
+virtualenv . &&
+source bin/activate &&
+pip install pyodbc Flask;
+python manager_app.py
