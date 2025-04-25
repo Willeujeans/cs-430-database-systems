@@ -360,10 +360,34 @@ def employee_delete():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
-        # 2. Delete the employee's specializations
-        # 3. Delete from employee
-        # 4. Close connection
-
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
+        try:
+            # Begin transaction
+            cursor.execute("BEGIN TRANSACTION")
+            
+            # 2. Delete the employee's specializations
+            cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+            
+            # Delete entries with this employee data
+            cursor.execute("DELETE FROM expert WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airworthiness_test WHERE ssn = ?", (ssn,))
+            
+            # 3. Delete employee data
+            cursor.execute("DELETE FROM employee WHERE ssn = ?", (ssn,))
+            
+            # Commit the transaction
+            cursor.execute("COMMIT")
+        except Exception as e:
+            # If anything goes wrong, rollback
+            cursor.execute("ROLLBACK")
+            print(f"Error deleting employee: {e}")
+        finally:
+            # 4. Close connection
+            cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_delete'))
