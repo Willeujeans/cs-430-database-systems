@@ -216,10 +216,47 @@ def employee_add():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
         # 2. Check if this SSN already exists
+        cursor.execute('''
+            SELECT ssn FROM employee WHERE ssn = ?
+        ''', (ssn,))
+        
+        existing_employee = cursor.fetchone()
+        
         # 3. If not, insert into employee and handle specialization
+        if not existing_employee:
+            # Insert into employee table
+            cursor.execute('''
+                INSERT INTO employee (ssn, name, password, address, phone, salary)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (ssn, name, password_hashed, address, phone, salary))
+            
+            # Handle specialization if provided
+            if specialization:
+                if specialization == 'Manager':
+                    cursor.execute('''
+                        INSERT INTO manager (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+                elif specialization == 'Technician':
+                    cursor.execute('''
+                        INSERT INTO technician (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+                elif specialization == 'ATC':
+                    cursor.execute('''
+                        INSERT INTO atc (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+            
+            # Commit the transaction
+            cnxn.commit()
+        
         # 4. Close connection
-
+        cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_add'))
