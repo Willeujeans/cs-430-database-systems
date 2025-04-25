@@ -216,10 +216,47 @@ def employee_add():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
         # 2. Check if this SSN already exists
+        cursor.execute('''
+            SELECT ssn FROM employee WHERE ssn = ?
+        ''', (ssn,))
+        
+        existing_employee = cursor.fetchone()
+        
         # 3. If not, insert into employee and handle specialization
+        if not existing_employee:
+            # Insert into employee table
+            cursor.execute('''
+                INSERT INTO employee (ssn, name, password, address, phone, salary)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (ssn, name, password_hashed, address, phone, salary))
+            
+            # Handle specialization if provided
+            if specialization:
+                if specialization == 'Manager':
+                    cursor.execute('''
+                        INSERT INTO manager (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+                elif specialization == 'Technician':
+                    cursor.execute('''
+                        INSERT INTO technician (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+                elif specialization == 'ATC':
+                    cursor.execute('''
+                        INSERT INTO atc (ssn)
+                        VALUES (?)
+                    ''', (ssn,))
+            
+            # Commit the transaction
+            cnxn.commit()
+        
         # 4. Close connection
-
+        cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_add'))
@@ -246,11 +283,66 @@ def employee_update():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
         # 2. Check if employee with SSN exists
+        cursor.execute('''
+            SELECT ssn FROM employee WHERE ssn = ?
+        ''', (ssn,))
+        
+        existing_employee = cursor.fetchone()
+        
         # 3. If exists, update non-empty fields
-        # 4. Handle specialization
+        if existing_employee:
+            # Build update parts for non-empty fields
+            update_parts = []
+            params = []
+            
+            if name:
+                update_parts.append("name = ?")
+                params.append(name)
+            
+            if password_hashed:
+                update_parts.append("password = ?")
+                params.append(password_hashed)
+            
+            if address:
+                update_parts.append("address = ?")
+                params.append(address)
+            
+            if phone:
+                update_parts.append("phone = ?")
+                params.append(phone)
+            
+            if salary:
+                update_parts.append("salary = ?")
+                params.append(salary)
+            
+            # If we have fields to update
+            if update_parts:
+                query = "UPDATE employee SET " + ", ".join(update_parts) + " WHERE ssn = ?"
+                params.append(ssn)
+                cursor.execute(query, params)
+            
+            # 4. Handle specialization
+            if specialization:
+                # Change specialization
+                # (I am assuming employees can only be: manager, technician, or atc)
+                cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+                
+                if specialization == 'Manager':
+                    cursor.execute("INSERT INTO manager (ssn) VALUES (?)", (ssn,))
+                elif specialization == 'Technician':
+                    cursor.execute("INSERT INTO technician (ssn) VALUES (?)", (ssn,))
+                elif specialization == 'ATC':
+                    cursor.execute("INSERT INTO atc (ssn) VALUES (?)", (ssn,))
+            
+            cnxn.commit()
         # 5. Close connection
-
+        cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_update'))
@@ -268,10 +360,34 @@ def employee_delete():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
-        # 2. Delete the employee's specializations
-        # 3. Delete from employee
-        # 4. Close connection
-
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
+        
+        try:
+            # Begin transaction
+            cursor.execute("BEGIN TRANSACTION")
+            
+            # 2. Delete the employee's specializations
+            cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+            
+            # Delete entries with this employee data
+            cursor.execute("DELETE FROM expert WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airworthiness_test WHERE ssn = ?", (ssn,))
+            
+            # 3. Delete employee data
+            cursor.execute("DELETE FROM employee WHERE ssn = ?", (ssn,))
+            
+            # Commit the transaction
+            cursor.execute("COMMIT")
+        except Exception as e:
+            # If anything goes wrong, rollback
+            cursor.execute("ROLLBACK")
+            print(f"Error deleting employee: {e}")
+        finally:
+            # 4. Close connection
+            cnxn.close()
         # END-STUDENT-CODE
 
         return redirect(url_for('employee_delete'))
