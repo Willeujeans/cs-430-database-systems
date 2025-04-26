@@ -173,8 +173,8 @@ def login():
         cursor = cnxn.cursor()
         cursor.execute('''
             SELECT e.password
-            FROM employee e
-            JOIN manager m ON e.ssn = m.ssn
+            FROM airport.employee e
+            JOIN airport.manager m ON e.ssn = m.ssn
             WHERE e.ssn = ?
         ''', (username,))
         user = cursor.fetchone()
