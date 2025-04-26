@@ -729,14 +729,36 @@ def airplane_delete():
 def faa_test_add():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number doesn't exist, insert new FAA test
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
         name = request.form['name'].strip()
         max_score = parse_float(request.form['max_score'].strip())
-
+        
+        # Check if test_number already exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM faa_test 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Insert new FAA test
+            cursor.execute('''
+                INSERT INTO faa_test (test_number, name, max_score)
+                VALUES (?, ?, ?)
+            ''', (test_number, name, max_score))
+            cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Add")
@@ -747,15 +769,52 @@ def faa_test_add():
 def faa_test_update():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number exists, update name/max_score
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
         name = request.form['name'].strip() or None
         max_score = request.form['max_score'].strip() or None
         max_score = parse_float(max_score) if max_score else None
-
+        
+        # Check if test_number exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM faa_test 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            update_parts = []
+            params = []
+            
+            if name is not None:
+                update_parts.append("name = ?")
+                params.append(name)
+                
+            if max_score is not None:
+                update_parts.append("max_score = ?")
+                params.append(max_score)
+                
+            if update_parts:
+                query = f'''
+                    UPDATE faa_test
+                    SET {', '.join(update_parts)}
+                    WHERE test_number = ?
+                '''
+                params.append(test_number)
+                
+                cursor.execute(query, params)
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Update")
@@ -764,14 +823,49 @@ def faa_test_update():
 @app.route('/faa_tests/delete', methods=['GET', 'POST'])
 @login_required
 def faa_test_delete():
-    # START-STUDENT-CODE
+# START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number exists, delete from faa_test
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
-
+        
+        # First check if there are any test_events using this FAA test
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM test_event 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        event_count = cursor.fetchone()[0]
+        
+        if event_count > 0:
+            # Cannot delete FAA test with associated test events
+            message = f"Can't delete FAA Test #{test_number} because it has {event_count} test events"
+        else:
+            # Check if FAA test exists
+            cursor.execute('''
+                SELECT COUNT(*) 
+                FROM faa_test 
+                WHERE test_number = ?
+            ''', (test_number,))
+            
+            test_count = cursor.fetchone()[0]
+            
+            if test_count > 0:
+                # Delete the FAA test
+                cursor.execute('''
+                    DELETE FROM faa_test
+                    WHERE test_number = ?
+                ''', (test_number,))
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Delete")
