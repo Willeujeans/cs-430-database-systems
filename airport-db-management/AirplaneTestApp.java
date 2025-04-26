@@ -7,7 +7,7 @@ import java.security.MessageDigest;
 public class AirplaneTestApp {
     // START-STUDENT-CODE
     // Set the database connection URL and credentials
-    private static final String DB_URL = "jdbc:postgresql://localhost:5432/willschm?currentSchema=airport";
+    private static final String DB_URL = "jdbc:postgresql://faure.cs.colostate.edu:5432/willschm?currentSchema=airport";
     private static final String DB_USER = "willschm";
     private static final String DB_PASSWORD = "831553213";
     // END-STUDENT-CODE
@@ -130,7 +130,7 @@ public class AirplaneTestApp {
         // START-STUDENT-CODE
         // Write the query used to populate airplaneDropdown with the
         // registration numbers from the "airplane" table.
-        populateDropdown(airplaneDropdown, "");
+        populateDropdown(airplaneDropdown, "SELECT registration FROM airplane");
         // END-STUDENT-CODE
 
         row1.add(airplaneDropdown);
