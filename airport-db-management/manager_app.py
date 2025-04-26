@@ -678,12 +678,47 @@ def airplane_update():
 def airplane_delete():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If airplane exists, delete it
-    # 3. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
-
+        
+        # First check if there are any test_events using this airplane
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM test_event 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        event_count = cursor.fetchone()[0]
+        
+        if event_count > 0:
+            # Cannot delete airplane with associated test events
+            message = f"Cannot delete airplane {reg_number} because of test events {event_count}."
+        else:
+            # Check if airplane exists
+            cursor.execute('''
+                SELECT COUNT(*) 
+                FROM airplane 
+                WHERE reg_number = ?
+            ''', (reg_number,))
+            
+            airplane_count = cursor.fetchone()[0]
+            
+            if airplane_count > 0:
+                # Delete the airplane
+                cursor.execute('''
+                    DELETE FROM airplane
+                    WHERE reg_number = ?
+                ''', (reg_number,))
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('airplanes.html', airplanes=get_airplanes(), models=get_airplane_models(), action="Delete")
