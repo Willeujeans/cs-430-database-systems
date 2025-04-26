@@ -11,7 +11,7 @@ END $$;
 
 CREATE TABLE faa_test (
   test_number INT PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT,
   max_score INT
 );
 CREATE TABLE airplane_model (
@@ -48,7 +48,7 @@ CREATE TABLE test_event (
   test_number INT NOT NULL,
   ssn VARCHAR(9) NOT NULL,
   reg_number TEXT NOT NULL,
-  date DATE NOT NULL,
+  date DATE,
   duration INT CHECK (duration > 0),
   score INT,
   PRIMARY KEY (test_number, ssn, reg_number, date),

@@ -496,23 +496,39 @@ def model_add():
         cursor = cnxn.cursor()
 
         # 2. Insert new airplane model if it does not exist
-        cursor.execute('''
-            SELECT model_number
-            FROM airplane_model
-            WHERE model_number = ?
-        ''', (model_number,))
-        existing = cursor.fetchone()
-        
-        if not existing:
+        try:
             cursor.execute('''
-                INSERT INTO airplane_model (model_number, capacity, weight)
-                VALUES (?, ?, ?)
-            ''', (model_number, capacity, weight))
-            cnxn.commit()
-        
-        # 3. Close connection
-        cnxn.close()
+                SELECT model_number
+                FROM airplane_model
+                WHERE model_number = ?
+            ''', (model_number,))
+            existing = cursor.fetchone()
+            
+            if not existing:
+                cursor.execute('''
+                    INSERT INTO airplane_model (model_number, capacity, weight)
+                    VALUES (?, ?, ?)
+                ''', (model_number, capacity, weight))
+                cnxn.commit()
+            else:
+                error_message = f"Model number {model_number} already exists."
+        except pyodbc.Error as e:
+            # Check for constraint violations
+            if "CHECK constraint" in str(e):
+                if "capacity" in str(e):
+                    error_message = "Capacity must be greater than zero."
+                elif "weight" in str(e):
+                    error_message = "Weight must be greater than zero."
+                else:
+                    error_message = f"Database constraint violation: {str(e)}"
+            else:
+                error_message = f"Database error: {str(e)}"
+            cnxn.rollback()
+        finally:
+            # 3. Close connection
+            cnxn.close()
         # END-STUDENT-CODE
+
 
     return render_template('models.html', models=get_airplane_models(), action="Add")
 
@@ -533,37 +549,52 @@ def model_update():
         cnxn = pyodbc.connect(DSN)
         cursor = cnxn.cursor()
 
-        # 2. If model exists, update non-empty fields
-        cursor.execute('''
-            SELECT model_number
-            FROM airplane_model
-            WHERE model_number = ?
-        ''', (model_number,))
-        existing = cursor.fetchone()
+        try:
+            # 2. If model exists, update non-empty fields
+            cursor.execute('''
+                SELECT model_number
+                FROM airplane_model
+                WHERE model_number = ?
+            ''', (model_number,))
+            existing = cursor.fetchone()
 
-        if existing:
-            update_fields = []
-            params = []
-            
-            if capacity is not None:
-                update_fields.append("capacity = ?")
-                params.append(capacity)
-            if weight is not None:
-                update_fields.append("weight = ?")
-                params.append(weight)
-            
-            if update_fields:
-                update_query = '''
-                    UPDATE airplane_model
-                    SET {}
-                    WHERE model_number = ?
-                '''.format(", ".join(update_fields))
-                params.append(model_number)
-                cursor.execute(update_query, params)
-                cnxn.commit()
-
-        # 3. Close connection
-        cnxn.close()
+            if existing:
+                update_fields = []
+                params = []
+                
+                if capacity is not None:
+                    update_fields.append("capacity = ?")
+                    params.append(capacity)
+                if weight is not None:
+                    update_fields.append("weight = ?")
+                    params.append(weight)
+                
+                if update_fields:
+                    update_query = '''
+                        UPDATE airplane_model
+                        SET {}
+                        WHERE model_number = ?
+                    '''.format(", ".join(update_fields))
+                    params.append(model_number)
+                    cursor.execute(update_query, params)
+                    cnxn.commit()
+            else:
+                error_message = f"Model number {model_number} does not exist."
+        except pyodbc.Error as e:
+            # Check for constraint violations
+            if "CHECK constraint" in str(e):
+                if "capacity" in str(e):
+                    error_message = "Capacity must be greater than zero."
+                elif "weight" in str(e):
+                    error_message = "Weight must be greater than zero."
+                else:
+                    error_message = f"Database constraint violation: {str(e)}"
+            else:
+                error_message = f"Database error: {str(e)}"
+            cnxn.rollback()
+        finally:
+            # 3. Close connection
+            cnxn.close()
         # END-STUDENT-CODE
 
     return render_template('models.html', models=get_airplane_models(), action="Update")
@@ -616,12 +647,10 @@ def model_delete():
 @app.route('/airplanes/add', methods=['GET', 'POST'])
 @login_required
 def airplane_add():
-    # START-STUDENT-CODE
-    # 1. Connect to DB
+    # Connect to DB
     cnxn = pyodbc.connect(DSN)
     cursor = cnxn.cursor()
     
-    # 2. If POST, check if the airplane reg_number exists, otherwise insert
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
         model_number = request.form['model_number'].strip()
@@ -643,7 +672,7 @@ def airplane_add():
             ''', (reg_number, model_number))
             cnxn.commit()
     
-    # 3. Retrieve list of airplane_model for dropdown
+    # Retrieve list of airplane_model for dropdown
     cursor.execute('''
         SELECT model_number, capacity, weight   
         FROM airplane_model
@@ -652,18 +681,26 @@ def airplane_add():
     
     models = cursor.fetchall()
     
-    # 3. Close connection
+    # Get airplanes BEFORE closing the connection
+    cursor.execute('''
+        SELECT a.reg_number, a.model_number, am.capacity, am.weight
+        FROM airplane a
+        JOIN airplane_model am ON a.model_number = am.model_number
+        ORDER BY a.reg_number
+    ''')
+    
+    airplanes = cursor.fetchall()
+    
+    # Close connection
     cursor.close()
     cnxn.close()
-    # END-STUDENT-CODE
 
-    return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Add")
+    return render_template('airplanes.html', airplanes=airplanes, models=models, action="Add")
 
 
 @app.route('/airplanes/update', methods=['GET', 'POST'])
 @login_required
 def airplane_update():
-    # START-STUDENT-CODE
     # 1. Connect to DB
     cnxn = pyodbc.connect(DSN)
     cursor = cnxn.cursor()
@@ -693,19 +730,28 @@ def airplane_update():
     
     # 3. Retrieve list of airplane_model for dropdown
     cursor.execute('''
-        SELECT model_number, description
+        SELECT model_number, capacity, weight
         FROM airplane_model
         ORDER BY model_number
     ''')
     
     models = cursor.fetchall()
     
+    # Get airplanes BEFORE closing the connection
+    cursor.execute('''
+        SELECT a.reg_number, a.model_number, am.capacity, am.weight
+        FROM airplane a
+        JOIN airplane_model am ON a.model_number = am.model_number
+        ORDER BY a.reg_number
+    ''')
+    
+    airplanes = cursor.fetchall()
+    
     # 4. Close connection
     cursor.close()
     cnxn.close()
-    # END-STUDENT-CODE
 
-    return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Update")
+    return render_template('airplanes.html', airplanes=airplanes, models=models, action="Update")
 
 
 @app.route('/airplanes/delete', methods=['GET', 'POST'])
