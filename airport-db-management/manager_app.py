@@ -757,7 +757,6 @@ def airplane_update():
 @app.route('/airplanes/delete', methods=['GET', 'POST'])
 @login_required
 def airplane_delete():
-    # START-STUDENT-CODE
     # 1. Connect to DB
     cnxn = pyodbc.connect(DSN)
     cursor = cnxn.cursor()
@@ -797,12 +796,28 @@ def airplane_delete():
                 ''', (reg_number,))
                 cnxn.commit()
     
+    # Get the airplane data
+    cursor.execute('''
+        SELECT a.reg_number, a.model_number, am.capacity, am.weight
+        FROM airplane a
+        JOIN airplane_model am ON a.model_number = am.model_number
+        ORDER BY a.reg_number
+    ''')
+    airplanes = cursor.fetchall()
+    
+    # Get the airplane models data
+    cursor.execute('''
+        SELECT model_number, capacity, weight
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    models = cursor.fetchall()
+    
     # 3. Close connection
     cursor.close()
     cnxn.close()
-    # END-STUDENT-CODE
 
-    return render_template('airplanes.html', airplanes=get_airplanes(), models=get_airplane_models(), action="Delete")
+    return render_template('airplanes.html', airplanes=airplanes, models=models, action="Delete", message=message)
 
 
 @app.route('/faa_tests/add', methods=['GET', 'POST'])
