@@ -823,14 +823,49 @@ def faa_test_update():
 @app.route('/faa_tests/delete', methods=['GET', 'POST'])
 @login_required
 def faa_test_delete():
-    # START-STUDENT-CODE
+# START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number exists, delete from faa_test
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
-
+        
+        # First check if there are any test_events using this FAA test
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM test_event 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        event_count = cursor.fetchone()[0]
+        
+        if event_count > 0:
+            # Cannot delete FAA test with associated test events
+            message = f"Can't delete FAA Test #{test_number} because it has {event_count} test events"
+        else:
+            # Check if FAA test exists
+            cursor.execute('''
+                SELECT COUNT(*) 
+                FROM faa_test 
+                WHERE test_number = ?
+            ''', (test_number,))
+            
+            test_count = cursor.fetchone()[0]
+            
+            if test_count > 0:
+                # Delete the FAA test
+                cursor.execute('''
+                    DELETE FROM faa_test
+                    WHERE test_number = ?
+                ''', (test_number,))
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Delete")
