@@ -227,7 +227,7 @@ public class AirplaneTestApp {
             // START-STUDENT-CODE
             // Build the logic to insert a new test event into the "test_event"
             // table.
-            String sql = "";
+            String sql = "INSERT INTO test_event (test_number, technician_id, airplane_registration, hours, minutes, seconds, score) VALUES (?, ?, ?, ?, ?, ?, ?)";
             // END-STUDENT-CODE
 
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
