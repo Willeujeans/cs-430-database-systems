@@ -142,7 +142,7 @@ def get_airworthiness_tests():
     # 2. Retrieve all airworthiness test events (test_number, ssn, reg_number, date, duration, score)
     cursor.execute('''
         SELECT test_number, ssn, reg_number, date, duration, score
-        FROM test_event
+        FROM airport.test_event
     ''')
     
     tests = cursor.fetchall()
@@ -228,7 +228,7 @@ def employee_add():
         
         # 2. Check if this SSN already exists
         cursor.execute('''
-            SELECT ssn FROM employee WHERE ssn = ?
+            SELECT ssn FROM airport.employee WHERE ssn = ?
         ''', (ssn,))
         
         existing_employee = cursor.fetchone()
@@ -238,7 +238,7 @@ def employee_add():
             try:
                 # Insert into employee table
                 cursor.execute('''
-                    INSERT INTO employee (ssn, name, password, address, phone, salary)
+                    INSERT INTO airport.employee (ssn, name, password, address, phone, salary)
                     VALUES (?, ?, ?, ?, ?, ?)
                 ''', (ssn, name, password_hashed, address, phone, salary))
                 
@@ -246,17 +246,17 @@ def employee_add():
                 if specialization:
                     if specialization == 'manager':
                         cursor.execute('''
-                            INSERT INTO manager (ssn)
+                            INSERT INTO airport.manager (ssn)
                             VALUES (?)
                         ''', (ssn,))
                     elif specialization == 'technician':
                         cursor.execute('''
-                            INSERT INTO technician (ssn)
+                            INSERT INTO airport.technician (ssn)
                             VALUES (?)
                         ''', (ssn,))
                     elif specialization == 'atc':
                         cursor.execute('''
-                            INSERT INTO atc (ssn)
+                            INSERT INTO airport.atc (ssn)
                             VALUES (?)
                         ''', (ssn,))
                 
@@ -301,7 +301,7 @@ def employee_update():
         
         # 2. Check if employee with SSN exists
         cursor.execute('''
-            SELECT ssn FROM employee WHERE ssn = ?
+            SELECT ssn FROM airport.employee WHERE ssn = ?
         ''', (ssn,))
         
         existing_employee = cursor.fetchone()
@@ -334,7 +334,7 @@ def employee_update():
             
             # If we have fields to update
             if update_parts:
-                query = "UPDATE employee SET " + ", ".join(update_parts) + " WHERE ssn = ?"
+                query = "UPDATE airport.employee SET " + ", ".join(update_parts) + " WHERE ssn = ?"
                 params.append(ssn)
                 cursor.execute(query, params)
             
@@ -342,16 +342,16 @@ def employee_update():
             if specialization:
                 # Change specialization
                 # (I am assuming employees can only be: manager, technician, or atc)
-                cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
-                cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
-                cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM airport.manager WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM airport.technician WHERE ssn = ?", (ssn,))
+                cursor.execute("DELETE FROM airport.atc WHERE ssn = ?", (ssn,))
                 
                 if specialization == 'manager':
-                    cursor.execute("INSERT INTO manager (ssn) VALUES (?)", (ssn,))
+                    cursor.execute("INSERT INTO airport.manager (ssn) VALUES (?)", (ssn,))
                 elif specialization == 'technician':
-                    cursor.execute("INSERT INTO technician (ssn) VALUES (?)", (ssn,))
+                    cursor.execute("INSERT INTO airport.technician (ssn) VALUES (?)", (ssn,))
                 elif specialization == 'atc':
-                    cursor.execute("INSERT INTO atc (ssn) VALUES (?)", (ssn,))
+                    cursor.execute("INSERT INTO airport.atc (ssn) VALUES (?)", (ssn,))
             
             cnxn.commit()
         # 5. Close connection
@@ -381,16 +381,16 @@ def employee_delete():
             cursor.execute("BEGIN TRANSACTION")
             
             # 2. Delete the employee's specializations
-            cursor.execute("DELETE FROM manager WHERE ssn = ?", (ssn,))
-            cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
-            cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.manager WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.technician WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.atc WHERE ssn = ?", (ssn,))
             
             # Delete entries with this employee data
-            cursor.execute("DELETE FROM expert WHERE ssn = ?", (ssn,))
-            cursor.execute("DELETE FROM test_event WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.expert WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.test_event WHERE ssn = ?", (ssn,))
             
             # 3. Delete employee data
-            cursor.execute("DELETE FROM employee WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM airport.employee WHERE ssn = ?", (ssn,))
             
             # Commit the transaction
             cursor.execute("COMMIT")
@@ -422,7 +422,7 @@ def expertise():
         if action == "add":
             try:
                 cursor.execute('''
-                    INSERT INTO expert (ssn, model_number)
+                    INSERT INTO airport.expert (ssn, model_number)
                     VALUES (?, ?)
                 ''', (ssn, model_number))
                 cnxn.commit()
@@ -430,7 +430,7 @@ def expertise():
                 pass
         elif action == "remove":
             cursor.execute('''
-                DELETE FROM expert
+                DELETE FROM airport.expert
                 WHERE ssn = ? AND model_number = ?
             ''', (ssn, model_number))
             if cursor.rowcount > 0:
@@ -439,10 +439,10 @@ def expertise():
     cursor.execute('''
         SELECT t.ssn, e.name, 
                (SELECT STRING_AGG(model_number, ', ') 
-                FROM expert 
+                FROM airport.expert 
                 WHERE ssn = t.ssn) AS expertise
-        FROM technician t
-        JOIN employee e ON t.ssn = e.ssn
+        FROM airport.technician t
+        JOIN airport.employee e ON t.ssn = e.ssn
         ORDER BY e.name
     ''')
     technicians = cursor.fetchall()
@@ -453,7 +453,7 @@ def expertise():
 
     cursor.execute('''
         SELECT model_number, capacity, weight 
-        FROM airplane_model
+        FROM airport.airplane_model
         ORDER BY model_number
     ''')
     models = cursor.fetchall()
@@ -478,7 +478,7 @@ def update_salaries():
             
             # 2. Increase salary by 'percentage' for all employees
             cursor.execute('''
-                UPDATE employee
+                UPDATE airport.employee
                 SET salary = salary + (salary * ?)
             ''', (percentage,))
             
@@ -512,14 +512,14 @@ def model_add():
         try:
             cursor.execute('''
                 SELECT model_number
-                FROM airplane_model
+                FROM airport.airplane_model
                 WHERE model_number = ?
             ''', (model_number,))
             existing = cursor.fetchone()
             
             if not existing:
                 cursor.execute('''
-                    INSERT INTO airplane_model (model_number, capacity, weight)
+                    INSERT INTO airport.airplane_model (model_number, capacity, weight)
                     VALUES (?, ?, ?)
                 ''', (model_number, capacity, weight))
                 cnxn.commit()
@@ -566,7 +566,7 @@ def model_update():
             # 2. If model exists, update non-empty fields
             cursor.execute('''
                 SELECT model_number
-                FROM airplane_model
+                FROM airport.airplane_model
                 WHERE model_number = ?
             ''', (model_number,))
             existing = cursor.fetchone()
@@ -628,7 +628,7 @@ def model_delete():
             # Check for airplanes that have the model we are deleting
             cursor.execute('''
                 SELECT reg_number 
-                FROM airplane 
+                FROM airport.airplane 
                 WHERE model_number = ?
             ''', (model_number,))
             dependent_airplanes = cursor.fetchall()
@@ -638,7 +638,7 @@ def model_delete():
             else:
                 # 2. Delete the model if it exists
                 cursor.execute('''
-                    DELETE FROM airplane_model 
+                    DELETE FROM airport.airplane_model 
                     WHERE model_number = ?
                 ''', (model_number,))
                 if cursor.rowcount > 0:
@@ -671,7 +671,7 @@ def airplane_add():
         # Check if airplane with this reg_number already exists
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM airplane 
+            FROM airport.airplane 
             WHERE reg_number = ?
         ''', (reg_number,))
         
@@ -680,7 +680,7 @@ def airplane_add():
         if count == 0:
             # Insert new airplane
             cursor.execute('''
-                INSERT INTO airplane (reg_number, model_number)
+                INSERT INTO airport.airplane (reg_number, model_number)
                 VALUES (?, ?)
             ''', (reg_number, model_number))
             cnxn.commit()
@@ -688,7 +688,7 @@ def airplane_add():
     # Retrieve list of airplane_model for dropdown
     cursor.execute('''
         SELECT model_number, capacity, weight   
-        FROM airplane_model
+        FROM airport.airplane_model
         ORDER BY model_number
     ''')
     
@@ -697,8 +697,8 @@ def airplane_add():
     # Get airplanes BEFORE closing the connection
     cursor.execute('''
         SELECT a.reg_number, a.model_number, am.capacity, am.weight
-        FROM airplane a
-        JOIN airplane_model am ON a.model_number = am.model_number
+        FROM airport.airplane a
+        JOIN airport.airplane_model am ON a.model_number = am.model_number
         ORDER BY a.reg_number
     ''')
     
@@ -726,7 +726,7 @@ def airplane_update():
         # Check if airplane with this reg_number exists
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM airplane 
+            FROM airport.airplane 
             WHERE reg_number = ?
         ''', (reg_number,))
         
@@ -735,7 +735,7 @@ def airplane_update():
         if count > 0:
             # Update the existing airplane's model number
             cursor.execute('''
-                UPDATE airplane
+                UPDATE airport.airplane
                 SET model_number = ?
                 WHERE reg_number = ?
             ''', (model_number, reg_number))
@@ -744,7 +744,7 @@ def airplane_update():
     # 3. Retrieve list of airplane_model for dropdown
     cursor.execute('''
         SELECT model_number, capacity, weight
-        FROM airplane_model
+        FROM airport.airplane_model
         ORDER BY model_number
     ''')
     
@@ -753,8 +753,8 @@ def airplane_update():
     # Get airplanes BEFORE closing the connection
     cursor.execute('''
         SELECT a.reg_number, a.model_number, am.capacity, am.weight
-        FROM airplane a
-        JOIN airplane_model am ON a.model_number = am.model_number
+        FROM airport.airplane a
+        JOIN airport.airplane_model am ON a.model_number = am.model_number
         ORDER BY a.reg_number
     ''')
     
@@ -782,7 +782,7 @@ def airplane_delete():
         # First check if there are any test_events using this airplane
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM test_event 
+            FROM airport.test_event 
             WHERE reg_number = ?
         ''', (reg_number,))
         
@@ -795,7 +795,7 @@ def airplane_delete():
             # Check if airplane exists
             cursor.execute('''
                 SELECT COUNT(*) 
-                FROM airplane 
+                FROM airport.airplane 
                 WHERE reg_number = ?
             ''', (reg_number,))
             
@@ -804,7 +804,7 @@ def airplane_delete():
             if airplane_count > 0:
                 # Delete the airplane
                 cursor.execute('''
-                    DELETE FROM airplane
+                    DELETE FROM airport.airplane
                     WHERE reg_number = ?
                 ''', (reg_number,))
                 cnxn.commit()
@@ -812,8 +812,8 @@ def airplane_delete():
     # Get the airplane data
     cursor.execute('''
         SELECT a.reg_number, a.model_number, am.capacity, am.weight
-        FROM airplane a
-        JOIN airplane_model am ON a.model_number = am.model_number
+        FROM airport.airplane a
+        JOIN airport.airplane_model am ON a.model_number = am.model_number
         ORDER BY a.reg_number
     ''')
     airplanes = cursor.fetchall()
@@ -821,7 +821,7 @@ def airplane_delete():
     # Get the airplane models data
     cursor.execute('''
         SELECT model_number, capacity, weight
-        FROM airplane_model
+        FROM airport.airplane_model
         ORDER BY model_number
     ''')
     models = cursor.fetchall()
@@ -851,7 +851,7 @@ def faa_test_add():
         # Check if test_number already exists
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM faa_test 
+            FROM airport.faa_test 
             WHERE test_number = ?
         ''', (test_number,))
         
@@ -860,7 +860,7 @@ def faa_test_add():
         if count == 0:
             # Insert new FAA test
             cursor.execute('''
-                INSERT INTO faa_test (test_number, name, max_score)
+                INSERT INTO airport.faa_test (test_number, name, max_score)
                 VALUES (?, ?, ?)
             ''', (test_number, name, max_score))
             cnxn.commit()
@@ -892,7 +892,7 @@ def faa_test_update():
         # Check if test_number exists
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM faa_test 
+            FROM airport.faa_test 
             WHERE test_number = ?
         ''', (test_number,))
         
@@ -912,7 +912,7 @@ def faa_test_update():
                 
             if update_parts:
                 query = f'''
-                    UPDATE faa_test
+                    UPDATE airport.faa_test
                     SET {', '.join(update_parts)}
                     WHERE test_number = ?
                 '''
@@ -945,7 +945,7 @@ def faa_test_delete():
         # First check if there are any test_events using this FAA test
         cursor.execute('''
             SELECT COUNT(*) 
-            FROM test_event 
+            FROM airport.test_event 
             WHERE test_number = ?
         ''', (test_number,))
         
@@ -958,7 +958,7 @@ def faa_test_delete():
             # Check if FAA test exists
             cursor.execute('''
                 SELECT COUNT(*) 
-                FROM faa_test 
+                FROM airport.faa_test 
                 WHERE test_number = ?
             ''', (test_number,))
             
@@ -967,7 +967,7 @@ def faa_test_delete():
             if test_count > 0:
                 # Delete the FAA test
                 cursor.execute('''
-                    DELETE FROM faa_test
+                    DELETE FROM airport.faa_test
                     WHERE test_number = ?
                 ''', (test_number,))
                 cnxn.commit()
