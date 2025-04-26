@@ -437,9 +437,21 @@ def update_salaries():
 
             # START-STUDENT-CODE
             # 1. Connect to DB
+            cnxn = pyodbc.connect(DSN)
+            cursor = cnxn.cursor()
+            
             # 2. Increase salary by 'percentage' for all employees
+            cursor.execute('''
+                UPDATE employee
+                SET salary = salary + (salary * ?)
+            ''', (percentage,))
+            
+            # Commit the transaction
+            cnxn.commit()
+            
             # 3. Close connection
-
+            cursor.close()
+            cnxn.close()
             # END-STUDENT-CODE
 
         return redirect(url_for('index'))
