@@ -130,7 +130,7 @@ public class AirplaneTestApp {
         // START-STUDENT-CODE
         // Write the query used to populate airplaneDropdown with the
         // registration numbers from the "airplane" table.
-        populateDropdown(airplaneDropdown, "SELECT registration FROM airport.airplane");
+        populateDropdown(airplaneDropdown, "SELECT reg_number FROM airport.airplane");
         // END-STUDENT-CODE
 
         row1.add(airplaneDropdown);
@@ -227,7 +227,7 @@ public class AirplaneTestApp {
             // START-STUDENT-CODE
             // Build the logic to insert a new test event into the "test_event"
             // table.
-            String sql = "INSERT INTO airport.test_event (test_number, technician_id, airplane_registration, hours, minutes, seconds, score) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO airport.test_event (test_number, ssn, reg_number, date, duration, score) VALUES (?, ?, ?, ?, ?, ?)";
             // END-STUDENT-CODE
 
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
