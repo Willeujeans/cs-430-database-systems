@@ -729,14 +729,36 @@ def airplane_delete():
 def faa_test_add():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number doesn't exist, insert new FAA test
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
         name = request.form['name'].strip()
         max_score = parse_float(request.form['max_score'].strip())
-
+        
+        # Check if test_number already exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM faa_test 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Insert new FAA test
+            cursor.execute('''
+                INSERT INTO faa_test (test_number, name, max_score)
+                VALUES (?, ?, ?)
+            ''', (test_number, name, max_score))
+            cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Add")
