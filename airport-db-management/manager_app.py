@@ -495,9 +495,40 @@ def model_update():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
-        # 2. If model exists, update non-empty fields
-        # 3. Close connection
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
 
+        # 2. If model exists, update non-empty fields
+        cursor.execute('''
+            SELECT model_number
+            FROM airplane_model
+            WHERE model_number = ?
+        ''', (model_number,))
+        existing = cursor.fetchone()
+
+        if existing:
+            update_fields = []
+            params = []
+            
+            if capacity is not None:
+                update_fields.append("capacity = ?")
+                params.append(capacity)
+            if weight is not None:
+                update_fields.append("weight = ?")
+                params.append(weight)
+            
+            if update_fields:
+                update_query = '''
+                    UPDATE airplane_model
+                    SET {}
+                    WHERE model_number = ?
+                '''.format(", ".join(update_fields))
+                params.append(model_number)
+                cursor.execute(update_query, params)
+                cnxn.commit()
+
+        # 3. Close connection
+        cnxn.close()
         # END-STUDENT-CODE
 
     return render_template('models.html', models=get_airplane_models(), action="Update")
