@@ -583,16 +583,43 @@ def model_delete():
 def airplane_add():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. If POST, check if the airplane reg_number exists, otherwise insert
-    # 3. Retrieve list of airplane_model for dropdown
-    # 3. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
         model_number = request.form['model_number'].strip()
-
-    models = []
-
+        
+        # Check if airplane with this reg_number already exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM airplane 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Insert new airplane
+            cursor.execute('''
+                INSERT INTO airplane (reg_number, model_number)
+                VALUES (?, ?)
+            ''', (reg_number, model_number))
+            cnxn.commit()
+    
+    # 3. Retrieve list of airplane_model for dropdown
+    cursor.execute('''
+        SELECT model_number, description
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    
+    models = cursor.fetchall()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Add")
@@ -603,16 +630,44 @@ def airplane_add():
 def airplane_update():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. (POST) If airplane exists, update the model_number
-    # 3. Retrieve list of airplane_model for dropdown
-    # 4. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
         model_number = request.form['model_number'].strip()
-
-    models = []
-
+        
+        # Check if airplane with this reg_number exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM airplane 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            # Update the existing airplane's model number
+            cursor.execute('''
+                UPDATE airplane
+                SET model_number = ?
+                WHERE reg_number = ?
+            ''', (model_number, reg_number))
+            cnxn.commit()
+    
+    # 3. Retrieve list of airplane_model for dropdown
+    cursor.execute('''
+        SELECT model_number, description
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    
+    models = cursor.fetchall()
+    
+    # 4. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Update")
@@ -623,15 +678,50 @@ def airplane_update():
 def airplane_delete():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If airplane exists, delete it
-    # 3. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
-
+        
+        # First check if there are any test_events using this airplane
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM test_event 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        event_count = cursor.fetchone()[0]
+        
+        if event_count > 0:
+            # Cannot delete airplane with associated test events
+            message = f"Cannot delete airplane {reg_number} because of test events {event_count}."
+        else:
+            # Check if airplane exists
+            cursor.execute('''
+                SELECT COUNT(*) 
+                FROM airplane 
+                WHERE reg_number = ?
+            ''', (reg_number,))
+            
+            airplane_count = cursor.fetchone()[0]
+            
+            if airplane_count > 0:
+                # Delete the airplane
+                cursor.execute('''
+                    DELETE FROM airplane
+                    WHERE reg_number = ?
+                ''', (reg_number,))
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
-    return render_template('airplanes.html', airplanes=get_airplanes(), models=get_models(), action="Delete")
+    return render_template('airplanes.html', airplanes=get_airplanes(), models=get_airplane_models(), action="Delete")
 
 
 @app.route('/faa_tests/add', methods=['GET', 'POST'])
