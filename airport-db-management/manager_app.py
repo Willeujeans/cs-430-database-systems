@@ -201,6 +201,7 @@ def logout():
 @login_required
 def employee_add():
     employees = get_employees()
+    error_message = None
 
     if request.method == 'POST':
         ssn = request.form['ssn'].strip()
@@ -211,6 +212,12 @@ def employee_add():
         salary = request.form['salary'].strip()
         specialization = request.form.get('specialization')
 
+        # Validate SSN length
+        if len(ssn) > 9:
+            error_message = "SSN must be 9 characters or less"
+            return render_template('employees.html', employees=employees, action='Add', error_message=error_message)
+        
+        # Continue with the rest of the code if validation passes
         salary = parse_float(salary)
         password_hashed = hash_password(password) if password else None
 
@@ -228,40 +235,46 @@ def employee_add():
         
         # 3. If not, insert into employee and handle specialization
         if not existing_employee:
-            # Insert into employee table
-            cursor.execute('''
-                INSERT INTO employee (ssn, name, password, address, phone, salary)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (ssn, name, password_hashed, address, phone, salary))
-            
-            # Handle specialization if provided
-            if specialization:
-                if specialization == 'Manager':
-                    cursor.execute('''
-                        INSERT INTO manager (ssn)
-                        VALUES (?)
-                    ''', (ssn,))
-                elif specialization == 'Technician':
-                    cursor.execute('''
-                        INSERT INTO technician (ssn)
-                        VALUES (?)
-                    ''', (ssn,))
-                elif specialization == 'ATC':
-                    cursor.execute('''
-                        INSERT INTO atc (ssn)
-                        VALUES (?)
-                    ''', (ssn,))
-            
-            # Commit the transaction
-            cnxn.commit()
-        
-        # 4. Close connection
-        cnxn.close()
+            try:
+                # Insert into employee table
+                cursor.execute('''
+                    INSERT INTO employee (ssn, name, password, address, phone, salary)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (ssn, name, password_hashed, address, phone, salary))
+                
+                # Handle specialization if provided
+                if specialization:
+                    if specialization == 'manager':
+                        cursor.execute('''
+                            INSERT INTO manager (ssn)
+                            VALUES (?)
+                        ''', (ssn,))
+                    elif specialization == 'technician':
+                        cursor.execute('''
+                            INSERT INTO technician (ssn)
+                            VALUES (?)
+                        ''', (ssn,))
+                    elif specialization == 'atc':
+                        cursor.execute('''
+                            INSERT INTO atc (ssn)
+                            VALUES (?)
+                        ''', (ssn,))
+                
+                # Commit the transaction
+                cnxn.commit()
+                return redirect(url_for('employee_add'))
+            except Exception as e:
+                # Handle database errors
+                cnxn.rollback()
+                error_message = f"Database error: {str(e)}"
+            finally:
+                # 4. Close connection
+                cnxn.close()
+        else:
+            error_message = "An employee with this SSN already exists"
         # END-STUDENT-CODE
 
-        return redirect(url_for('employee_add'))
-
-    return render_template('employees.html', employees=employees, action='Add')
+    return render_template('employees.html', employees=employees, action='Add', error_message=error_message)
 
 
 @app.route('/employee/update', methods=['GET', 'POST'])
@@ -333,11 +346,11 @@ def employee_update():
                 cursor.execute("DELETE FROM technician WHERE ssn = ?", (ssn,))
                 cursor.execute("DELETE FROM atc WHERE ssn = ?", (ssn,))
                 
-                if specialization == 'Manager':
+                if specialization == 'manager':
                     cursor.execute("INSERT INTO manager (ssn) VALUES (?)", (ssn,))
-                elif specialization == 'Technician':
+                elif specialization == 'technician':
                     cursor.execute("INSERT INTO technician (ssn) VALUES (?)", (ssn,))
-                elif specialization == 'ATC':
+                elif specialization == 'atc':
                     cursor.execute("INSERT INTO atc (ssn) VALUES (?)", (ssn,))
             
             cnxn.commit()
