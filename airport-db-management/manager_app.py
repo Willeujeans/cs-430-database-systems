@@ -583,16 +583,43 @@ def model_delete():
 def airplane_add():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. If POST, check if the airplane reg_number exists, otherwise insert
-    # 3. Retrieve list of airplane_model for dropdown
-    # 3. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
         model_number = request.form['model_number'].strip()
-
-    models = []
-
+        
+        # Check if airplane with this reg_number already exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM airplane 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Insert new airplane
+            cursor.execute('''
+                INSERT INTO airplane (reg_number, model_number)
+                VALUES (?, ?)
+            ''', (reg_number, model_number))
+            cnxn.commit()
+    
+    # 3. Retrieve list of airplane_model for dropdown
+    cursor.execute('''
+        SELECT model_number, description
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    
+    models = cursor.fetchall()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Add")
