@@ -58,10 +58,10 @@ def get_employees():
                 WHEN a.ssn IS NOT NULL THEN 'ATC'
                 ELSE ''
             END AS role
-        FROM employee e
-        LEFT JOIN manager m ON e.ssn = m.ssn
-        LEFT JOIN technician t ON e.ssn = t.ssn
-        LEFT JOIN atc a ON e.ssn = a.ssn
+        FROM airport.employee e
+        LEFT JOIN airport.manager m ON e.ssn = m.ssn
+        LEFT JOIN airport.technician t ON e.ssn = t.ssn
+        LEFT JOIN airport.atc a ON e.ssn = a.ssn
     ''')
     employees = cursor.fetchall()
     
@@ -81,7 +81,7 @@ def get_airplane_models():
     # 2. Retrieve all airplane models (model_number, capacity, weight)
     cursor.execute('''
         SELECT model_number, capacity, weight
-        FROM airplane_model
+        FROM airport.airplane_model
     ''')
     
     models = cursor.fetchall()
@@ -102,7 +102,7 @@ def get_airplanes():
     # 2. Retrieve all airplanes (reg_number, model_number)
     cursor.execute('''
         SELECT reg_number, model_number
-        FROM airplane
+        FROM airport.airplane
     ''')
     
     # 3. Close the connection
@@ -122,7 +122,7 @@ def get_faa_tests():
     # 2. Retrieve all FAA tests (test_number, name, max_score)
     cursor.execute('''
         SELECT test_number, name, max_score
-        FROM faa_test
+        FROM airport.faa_test
     ''')
     
     faa_tests = cursor.fetchall()
@@ -584,7 +584,7 @@ def model_update():
                 
                 if update_fields:
                     update_query = '''
-                        UPDATE airplane_model
+                        UPDATE airport.airplane_model
                         SET {}
                         WHERE model_number = ?
                     '''.format(", ".join(update_fields))
