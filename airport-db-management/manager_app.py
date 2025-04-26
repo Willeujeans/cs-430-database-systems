@@ -457,9 +457,26 @@ def model_add():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
-        # 2. Insert new airplane model if it does not exist
-        # 3. Close connection
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
 
+        # 2. Insert new airplane model if it does not exist
+        cursor.execute('''
+            SELECT model_number
+            FROM airplane_model
+            WHERE model_number = ?
+        ''', (model_number,))
+        existing = cursor.fetchone()
+        
+        if not existing:
+            cursor.execute('''
+                INSERT INTO airplane_model (model_number, capacity, weight)
+                VALUES (?, ?, ?)
+            ''', (model_number, capacity, weight))
+            cnxn.commit()
+        
+        # 3. Close connection
+        cnxn.close()
         # END-STUDENT-CODE
 
     return render_template('models.html', models=get_airplane_models(), action="Add")
