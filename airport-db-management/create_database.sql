@@ -26,7 +26,7 @@ CREATE TABLE airplane (
 );
 CREATE TABLE employee (
   ssn VARCHAR(9) PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT,
   password TEXT,
   address TEXT,
   phone TEXT,

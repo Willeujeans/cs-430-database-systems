@@ -645,7 +645,7 @@ def airplane_add():
     
     # 3. Retrieve list of airplane_model for dropdown
     cursor.execute('''
-        SELECT model_number, description
+        SELECT model_number, capacity, weight   
         FROM airplane_model
         ORDER BY model_number
     ''')
