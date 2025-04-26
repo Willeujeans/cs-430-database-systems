@@ -142,7 +142,7 @@ def get_airworthiness_tests():
     # 2. Retrieve all airworthiness test events (test_number, ssn, reg_number, date, duration, score)
     cursor.execute('''
         SELECT test_number, ssn, reg_number, date, duration, score
-        FROM airworthiness_test
+        FROM test_event
     ''')
     
     tests = cursor.fetchall()
@@ -374,7 +374,7 @@ def employee_delete():
             
             # Delete entries with this employee data
             cursor.execute("DELETE FROM expert WHERE ssn = ?", (ssn,))
-            cursor.execute("DELETE FROM airworthiness_test WHERE ssn = ?", (ssn,))
+            cursor.execute("DELETE FROM test_event WHERE ssn = ?", (ssn,))
             
             # 3. Delete employee data
             cursor.execute("DELETE FROM employee WHERE ssn = ?", (ssn,))
