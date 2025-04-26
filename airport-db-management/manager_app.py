@@ -630,16 +630,44 @@ def airplane_add():
 def airplane_update():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     # 2. (POST) If airplane exists, update the model_number
-    # 3. Retrieve list of airplane_model for dropdown
-    # 4. Close connection
-
     if request.method == 'POST':
         reg_number = request.form['reg_number'].strip()
         model_number = request.form['model_number'].strip()
-
-    models = []
-
+        
+        # Check if airplane with this reg_number exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM airplane 
+            WHERE reg_number = ?
+        ''', (reg_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            # Update the existing airplane's model number
+            cursor.execute('''
+                UPDATE airplane
+                SET model_number = ?
+                WHERE reg_number = ?
+            ''', (model_number, reg_number))
+            cnxn.commit()
+    
+    # 3. Retrieve list of airplane_model for dropdown
+    cursor.execute('''
+        SELECT model_number, description
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    
+    models = cursor.fetchall()
+    
+    # 4. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('airplanes.html', airplanes=get_airplanes(), models=models, action="Update")
