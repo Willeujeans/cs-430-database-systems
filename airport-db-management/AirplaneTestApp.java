@@ -145,7 +145,7 @@ public class AirplaneTestApp {
         // START-STUDENT-CODE
         // Write the query to populate testDropdown with the test_number from
         // "faa_test" table.
-        populateDropdown(testDropdown, "");
+        populateDropdown(testDropdown, "SELECT test_number FROM faa_test");
         // END-STUDENT-CODE
 
         row2.add(testDropdown);
