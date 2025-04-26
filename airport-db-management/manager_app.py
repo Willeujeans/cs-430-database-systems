@@ -398,31 +398,54 @@ def employee_delete():
 @app.route('/expertise', methods=['GET', 'POST'])
 @login_required
 def expertise():
-    # START-STUDENT-CODE
-    # 1. Connect to DB
-    # 2. If POST, add or remove expertise from 'expert' table
-    # 3. Retrieve technicians + models for dropdowns
-    # 4. Close connection
-
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    
     if request.method == 'POST':
         ssn = request.form['ssn'].strip()
         model_number = request.form['model_number'].strip()
         action = request.form['action']
 
         if action == "add":
-            ...
+            try:
+                cursor.execute('''
+                    INSERT INTO expert (ssn, model_number)
+                    VALUES (?, ?)
+                ''', (ssn, model_number))
+                cnxn.commit()
+            except pyodbc.IntegrityError:
+                pass
         elif action == "remove":
-            ...
+            cursor.execute('''
+                DELETE FROM expert
+                WHERE ssn = ? AND model_number = ?
+            ''', (ssn, model_number))
+            if cursor.rowcount > 0:
+                cnxn.commit()
 
-    technicians = []
+    cursor.execute('''
+        SELECT t.ssn, e.name, 
+               (SELECT STRING_AGG(model_number, ', ') 
+                FROM expert 
+                WHERE ssn = t.ssn) AS expertise
+        FROM technician t
+        JOIN employee e ON t.ssn = e.ssn
+        ORDER BY e.name
+    ''')
+    technicians = cursor.fetchall()
 
     formatted_technicians = [
         (tech[0], tech[1], tech[2] if tech[2] is not None else '') for tech in technicians
     ]
 
-    models = []
+    cursor.execute('''
+        SELECT model_number, capacity, weight 
+        FROM airplane_model
+        ORDER BY model_number
+    ''')
+    models = cursor.fetchall()
 
-    # END-STUDENT-CODE
+    cnxn.close()
 
     return render_template('expertise.html', technicians=formatted_technicians, models=models)
 
