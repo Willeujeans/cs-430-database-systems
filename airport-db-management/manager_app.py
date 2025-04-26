@@ -769,15 +769,52 @@ def faa_test_add():
 def faa_test_update():
     # START-STUDENT-CODE
     # 1. Connect to DB
+    cnxn = pyodbc.connect(DSN)
+    cursor = cnxn.cursor()
+    message = None
+    
     # 2. If test_number exists, update name/max_score
-    # 3. Close connection
-
     if request.method == 'POST':
         test_number = request.form['test_number'].strip()
         name = request.form['name'].strip() or None
         max_score = request.form['max_score'].strip() or None
         max_score = parse_float(max_score) if max_score else None
-
+        
+        # Check if test_number exists
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM faa_test 
+            WHERE test_number = ?
+        ''', (test_number,))
+        
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            update_parts = []
+            params = []
+            
+            if name is not None:
+                update_parts.append("name = ?")
+                params.append(name)
+                
+            if max_score is not None:
+                update_parts.append("max_score = ?")
+                params.append(max_score)
+                
+            if update_parts:
+                query = f'''
+                    UPDATE faa_test
+                    SET {', '.join(update_parts)}
+                    WHERE test_number = ?
+                '''
+                params.append(test_number)
+                
+                cursor.execute(query, params)
+                cnxn.commit()
+    
+    # 3. Close connection
+    cursor.close()
+    cnxn.close()
     # END-STUDENT-CODE
 
     return render_template('faa_tests.html', faa_tests=get_faa_tests(), action="Update")
