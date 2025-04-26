@@ -542,9 +542,37 @@ def model_delete():
 
         # START-STUDENT-CODE
         # 1. Connect to DB
-        # 2. Delete the model if it exists
-        # 3. Close connection
+        cnxn = pyodbc.connect(DSN)
+        cursor = cnxn.cursor()
 
+        try:
+            # Check for airplanes that have the model we are deleting
+            cursor.execute('''
+                SELECT reg_number 
+                FROM airplane 
+                WHERE model_number = ?
+            ''', (model_number,))
+            dependent_airplanes = cursor.fetchall()
+            
+            if dependent_airplanes:
+                message = "Cannot delete: Model is used by existing airplanes!"
+            else:
+                # 2. Delete the model if it exists
+                cursor.execute('''
+                    DELETE FROM airplane_model 
+                    WHERE model_number = ?
+                ''', (model_number,))
+                if cursor.rowcount > 0:
+                    cnxn.commit()
+                    message = "Model deleted successfully"
+                else:
+                    message = "Model not found"
+
+        except pyodbc.Error as e:
+            message = f"Database error: {str(e)}"
+        finally:
+            # 3. Close connection
+            cnxn.close()
         # END-STUDENT-CODE
 
     return render_template('models.html', models=get_airplane_models(), action="Delete")
