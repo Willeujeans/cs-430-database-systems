@@ -686,7 +686,7 @@ def airplane_delete():
 
     # END-STUDENT-CODE
 
-    return render_template('airplanes.html', airplanes=get_airplanes(), models=get_models(), action="Delete")
+    return render_template('airplanes.html', airplanes=get_airplanes(), models=get_airplane_models(), action="Delete")
 
 
 @app.route('/faa_tests/add', methods=['GET', 'POST'])
