@@ -56,24 +56,24 @@ CREATE TABLE airport.expert (
   FOREIGN KEY (ssn) REFERENCES airport.technician (ssn),
   FOREIGN KEY (model_number) REFERENCES airport.airplane_model (model_number)
 );
-
-CREATE OR REPLACE PROCEDURE InsertTestEvent (
-  p_test_number INT,
-  p_ssn VARCHAR(9),
-  p_reg_number TEXT,
-  p_date DATE,
-  p_duration INT,
-  p_score INT
+CREATE OR REPLACE PROCEDURE airport.insert_expert(
+    p_ssn VARCHAR(9),
+    p_model_number TEXT
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  -- Date validation
-  IF p_date > CURRENT_DATE THEN
-    RAISE EXCEPTION 'Date cannot be in the future';
-  END IF;
-  -- Insert test event
-  INSERT INTO airport.test_event (test_number, ssn, reg_number, date, duration, score)
-  VALUES (p_test_number, p_ssn, p_reg_number, p_date, p_duration, p_score);
+    -- Insert into expert table
+    -- The database will enforce foreign key constraints automatically
+    INSERT INTO airport.expert(ssn, model_number)
+    VALUES (p_ssn, p_model_number);
+    
+    RAISE NOTICE 'Successfully inserted expert with SSN % for model %', p_ssn, p_model_number;
+    
+EXCEPTION
+    WHEN foreign_key_violation THEN
+        RAISE EXCEPTION 'Foreign key violation: Either the SSN or model number does not exist';
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'This technician is already an expert on this model';
 END;
 $$;
