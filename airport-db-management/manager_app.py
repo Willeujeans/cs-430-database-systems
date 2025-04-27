@@ -593,16 +593,7 @@ def model_update():
             else:
                 error_message = f"Model number {model_number} does not exist."
         except pyodbc.Error as e:
-            # Check for constraint violations
-            if "CHECK constraint" in str(e):
-                if "capacity" in str(e):
-                    error_message = "Capacity must be greater than zero."
-                elif "weight" in str(e):
-                    error_message = "Weight must be greater than zero."
-                else:
-                    error_message = f"Database constraint violation: {str(e)}"
-            else:
-                error_message = f"Database error: {str(e)}"
+            error_message = f"Database error: {str(e)}"
             cnxn.rollback()
         finally:
             # 3. Close connection
