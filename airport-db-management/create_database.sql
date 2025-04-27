@@ -42,7 +42,7 @@ CREATE TABLE airport.test_event (
   ssn VARCHAR(9) NOT NULL,
   reg_number TEXT NOT NULL,
   date DATE,
-  duration INT CHECK (duration > 0),
+  duration INTERVAL,
   score INT,
   PRIMARY KEY (test_number, ssn, reg_number, date),
   FOREIGN KEY (test_number) REFERENCES airport.faa_test (test_number),
