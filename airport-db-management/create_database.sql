@@ -9,8 +9,8 @@ CREATE TABLE airport.faa_test (
 );
 CREATE TABLE airport.airplane_model (
   model_number TEXT PRIMARY KEY,
-  capacity INT CHECK (capacity > 0),
-  weight INT CHECK (weight > 0)
+  capacity INT,
+  weight INT
 );
 CREATE TABLE airport.airplane (
   reg_number TEXT PRIMARY KEY,
@@ -23,7 +23,7 @@ CREATE TABLE airport.employee (
   password TEXT,
   address TEXT,
   phone TEXT,
-  salary NUMERIC(10, 2) CHECK (salary > 0)
+  salary NUMERIC(10, 2)
 );
 CREATE TABLE airport.technician (
   ssn VARCHAR(9) PRIMARY KEY,
