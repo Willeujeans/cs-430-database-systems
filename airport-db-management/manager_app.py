@@ -264,7 +264,6 @@ def employee_add():
                 cnxn.commit()
                 return redirect(url_for('employee_add'))
             except Exception as e:
-                # Handle database errors
                 cnxn.rollback()
                 error_message = f"Database error: {str(e)}"
             finally:
@@ -385,7 +384,6 @@ def employee_delete():
             cursor.execute("DELETE FROM airport.technician WHERE ssn = ?", (ssn,))
             cursor.execute("DELETE FROM airport.atc WHERE ssn = ?", (ssn,))
             
-            # Delete entries with this employee data
             cursor.execute("DELETE FROM airport.expert WHERE ssn = ?", (ssn,))
             cursor.execute("DELETE FROM airport.test_event WHERE ssn = ?", (ssn,))
             
@@ -525,16 +523,6 @@ def model_add():
             else:
                 error_message = f"Model number {model_number} already exists."
         except pyodbc.Error as e:
-            # Check for constraint violations
-            if "CHECK constraint" in str(e):
-                if "capacity" in str(e):
-                    error_message = "Capacity must be greater than zero."
-                elif "weight" in str(e):
-                    error_message = "Weight must be greater than zero."
-                else:
-                    error_message = f"Database constraint violation: {str(e)}"
-            else:
-                error_message = f"Database error: {str(e)}"
             cnxn.rollback()
         finally:
             # 3. Close connection
@@ -593,7 +581,6 @@ def model_update():
             else:
                 error_message = f"Model number {model_number} does not exist."
         except pyodbc.Error as e:
-            error_message = f"Database error: {str(e)}"
             cnxn.rollback()
         finally:
             # 3. Close connection
@@ -740,7 +727,6 @@ def airplane_update():
     
     models = cursor.fetchall()
     
-    # Get airplanes BEFORE closing the connection
     cursor.execute('''
         SELECT a.reg_number, a.model_number, am.capacity, am.weight
         FROM airport.airplane a
