@@ -62,18 +62,24 @@ CREATE OR REPLACE PROCEDURE airport.insert_expert(
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    model_exists BOOLEAN;
 BEGIN
-    -- Insert into expert table
-    -- The database will enforce foreign key constraints automatically
-    INSERT INTO airport.expert(ssn, model_number)
-    VALUES (p_ssn, p_model_number);
+    -- Check if model number exists in airplane_model table
+    SELECT EXISTS(
+        SELECT 1 
+        FROM airport.airplane_model 
+        WHERE model_number = p_model_number
+    ) INTO model_exists;
     
-    RAISE NOTICE 'Successfully inserted expert with SSN % for model %', p_ssn, p_model_number;
-    
-EXCEPTION
-    WHEN foreign_key_violation THEN
-        RAISE EXCEPTION 'Foreign key violation: Either the SSN or model number does not exist';
-    WHEN unique_violation THEN
-        RAISE EXCEPTION 'This technician is already an expert on this model';
+    -- If model exists, insert into expert table
+    IF model_exists THEN
+        INSERT INTO airport.expert(ssn, model_number)
+        VALUES (p_ssn, p_model_number);
+        
+        RAISE NOTICE 'Inserted expert SSN % model %', p_ssn, p_model_number;
+    ELSE
+        RAISE EXCEPTION 'Error: Model number % does not exist', p_model_number;
+    END IF;
 END;
 $$;
