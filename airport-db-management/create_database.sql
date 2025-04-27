@@ -41,7 +41,7 @@ CREATE TABLE airport.test_event (
   test_number INT NOT NULL,
   ssn VARCHAR(9) NOT NULL,
   reg_number TEXT NOT NULL,
-  date DATE,
+  date DATE NOT NULL,
   duration INTERVAL,
   score INT,
   PRIMARY KEY (test_number, ssn, reg_number, date),
