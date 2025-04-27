@@ -56,44 +56,24 @@ CREATE TABLE airport.expert (
   FOREIGN KEY (ssn) REFERENCES airport.technician (ssn),
   FOREIGN KEY (model_number) REFERENCES airport.airplane_model (model_number)
 );
-CREATE OR REPLACE FUNCTION InsertTestEvent (
+
+CREATE OR REPLACE PROCEDURE InsertTestEvent (
   p_test_number INT,
   p_ssn VARCHAR(9),
   p_reg_number TEXT,
   p_date DATE,
   p_duration INT,
   p_score INT
-) RETURNS void AS $$
-DECLARE
-  v_max_score INT;
-  v_plane_model TEXT;
-  v_expert_model TEXT;
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
   -- Date validation
   IF p_date > CURRENT_DATE THEN
     RAISE EXCEPTION 'Date cannot be in the future';
   END IF;
-  -- Get max_score from airport.faa_test
-  SELECT max_score INTO v_max_score
-  FROM airport.faa_test
-  WHERE test_number = p_test_number;
-  IF p_score > v_max_score THEN
-    RAISE EXCEPTION 'Score % exceeds max allowed score % for test %', p_score, v_max_score, p_test_number;
-  END IF;
-  -- Get airport.airplane model from registration
-  SELECT model_number INTO v_plane_model
-  FROM airport.airplane
-  WHERE reg_number = p_reg_number;
-  -- Verify expert qualification
-  SELECT model_number INTO v_expert_model
-  FROM airport.expert
-  WHERE ssn = p_ssn
-  AND model_number = v_plane_model;
-  IF v_expert_model IS NULL THEN
-    RAISE EXCEPTION 'Expert % is not qualified for model %', p_ssn, v_plane_model;
-  END IF;
   -- Insert test event
   INSERT INTO airport.test_event (test_number, ssn, reg_number, date, duration, score)
   VALUES (p_test_number, p_ssn, p_reg_number, p_date, p_duration, p_score);
 END;
-$$ LANGUAGE plpgsql;
+$$;
