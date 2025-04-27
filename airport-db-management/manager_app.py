@@ -422,8 +422,7 @@ def expertise():
         if action == "add":
             try:
                 cursor.execute('''
-                    INSERT INTO airport.expert (ssn, model_number)
-                    VALUES (?, ?)
+                    CALL airport.insert_expert(?, ?)
                 ''', (ssn, model_number))
                 cnxn.commit()
             except pyodbc.IntegrityError:
